@@ -19,6 +19,7 @@ colorJugador = (255,255,255)
 colorMuro = (70,130,255)
 colorLiana = (255, 255, 0)
 colorTunel = (76,40,130)
+colorMina = (255,0,0)
 
 #Variables globales
 velocidad = 1
@@ -30,6 +31,7 @@ world_data = []
 wall_group = pygame.sprite.Group()
 liana_group = pygame.sprite.Group()
 tunel_group = pygame.sprite.Group()
+mina_group = pygame.sprite.Group()
 spawn_position = ()
 
 # Configuración del grid
@@ -48,13 +50,14 @@ reloj = pygame.time.Clock()
 
 #Clase de personajes
 class personaje:
-    def __init__(self, x, y, color, clase):
+    def __init__(self, x, y, color, clase, cantidadMinas):
         self.x = x
         self.y = y
         self.color = color
         self.image = pygame.Surface((tamano_celda, tamano_celda))
         self.rect = self.image.get_rect(topleft=(self.x, self.y))
         self.clase = clase
+        self.cantidadMinas = cantidadMinas
 
     #Actualiza el personaje dentro del grid    
     def update(self):
@@ -89,10 +92,31 @@ class personaje:
                 if tunel.x == self.x and tunel.y == self.y:
                     return True
             return False
-        
+    
+    def colocarMina(self):
+        if self.cantidadMinas > 0:
+            self.cantidadMinas -= 1
+            Mina = mina(self.x, self.y, colorMina)
+            mina_group.add(Mina)
+        else:
+            pass
+
 
 #Clase de Muros
 class muros(pygame.sprite.Sprite):
+    def __init__(self, x, y, color):
+        super().__init__()
+
+        self.x = x
+        self.y = y
+        self.color = color
+        self.image = pygame.Surface((tamano_celda, tamano_celda))
+        self.image.fill(self.color)
+        self.rect = self.image.get_rect()
+        self.rect.x = self.x * tamano_celda
+        self.rect.y = self.y * tamano_celda
+
+class mina(pygame.sprite.Sprite):
     def __init__(self, x, y, color):
         super().__init__()
 
@@ -129,7 +153,7 @@ for row, tiles in enumerate(world_data):
             spawn_position = (row, col)
         
 #Define los personajes (Jugador, enemigos)
-jugador = personaje(spawn_position[0], spawn_position[1], colorJugador, clase="cazador")
+jugador = personaje(spawn_position[0], spawn_position[1], colorJugador, clase="cazador", cantidadMinas=3)
 
 def dibujar_grid():
     """
@@ -151,7 +175,7 @@ def movimiento():
     key = pygame.key.get_pressed()
     if key[pygame.K_LEFT] == True :
         jugador.x -= velocidad
-        if jugador.colisionMuro() or jugador.colisionLiana() or jugador.colisionTunel(): #Devuelvve al jugador si no puede pasar por un camino
+        if jugador.colisionMuro() or jugador.colisionLiana() or jugador.colisionTunel(): #Devuelve al jugador si no puede pasar por un camino
             jugador.x += velocidad
         elif jugador.x < 0:
             jugador.x = 0
@@ -177,7 +201,40 @@ def movimiento():
         if jugador.colisionMuro() or jugador.colisionLiana() or jugador.colisionTunel():
             jugador.y -= velocidad
 
-   
+    elif key[pygame.K_a] == True :
+        jugador.x -= velocidad
+        if jugador.colisionMuro() or jugador.colisionLiana() or jugador.colisionTunel(): 
+            jugador.x += velocidad
+        elif jugador.x < 0:
+            jugador.x = 0
+        
+    elif key[pygame.K_d] == True :
+        jugador.x += velocidad
+        if jugador.x > (1000 - 40):
+            jugador.x = (1000 - 40)
+        elif jugador.colisionMuro() or jugador.colisionLiana() or jugador.colisionTunel():
+            jugador.x -= velocidad
+
+    elif key[pygame.K_w]== True :
+        jugador.y -= velocidad
+        if jugador.y < 0:
+            jugador.y = 0
+        if jugador.colisionMuro() or jugador.colisionLiana() or jugador.colisionTunel():
+            jugador.y += velocidad
+
+    elif key[pygame.K_s]== True :
+        jugador.y += velocidad
+        if jugador.y > (800 - 40):
+                jugador.y = (800 - 40)
+        if jugador.colisionMuro() or jugador.colisionLiana() or jugador.colisionTunel():
+            jugador.y -= velocidad
+
+    elif key[pygame.K_SPACE]== True:
+        jugador.colocarMina()
+
+
+
+
 
 ##################################
 # Bucle principal del juego - se ejecuta continuamente hasta que se cierra la ventana
@@ -187,6 +244,7 @@ while ejecutando:
     wall_group.draw(ventana)
     liana_group.draw(ventana)
     tunel_group.draw(ventana)
+    mina_group.draw(ventana)
     movimiento() #Revisa por movimiento
     # Procesar todos los eventos que ocurren (clicks, teclas, cierre de ventana, etc.)
     for evento in pygame.event.get():  # Obtiene lista de todos los eventos ocurridos desde el último frame
