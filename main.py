@@ -203,10 +203,6 @@ def movimiento():
     elif key[pygame.K_SPACE]== True:
         jugador.colocarMina()
 
-
-
-
-<<<<<<< HEAD
     elif key[pygame.K_a] == True :
         jugador.x -= velocidad
         if jugador.colisionMuro() or jugador.colisionLiana() or jugador.colisionTunel(): 
@@ -238,11 +234,6 @@ def movimiento():
     elif key[pygame.K_SPACE]== True:
         jugador.colocarMina()
 
-
-
-
-=======
->>>>>>> 8c37bfe3ae958ec490b6b6e84f3287ea3c1ed009
 
 ##################################
 # Bucle principal del juego - se ejecuta continuamente hasta que se cierra la ventana
