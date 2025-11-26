@@ -1,87 +1,161 @@
 import pygame
 import sys
 
-# Inicializar Pygame
-pygame.init()
-
-# Configuración de la ventana
-ANCHO = 650
-ALTO = 450
-ventana = pygame.display.set_mode((ANCHO, ALTO))
-pygame.display.set_caption("Menú del Juego")
-
-# Cargar y escalar la imagen de fondo
-try:
-    fondo = pygame.image.load("fondoMenu.png")
-    fondo = pygame.transform.scale(fondo, (ANCHO, ALTO))
-except pygame.error as e:
-    print(f"No se pudo cargar la imagen: {e}")
-    # Crear un fondo alternativo si no se encuentra la imagen
-    fondo = pygame.Surface((ANCHO, ALTO))
-    fondo.fill((135, 206, 235))  # Color celeste
-
-# Configurar fuente para el título
-fuente_titulo = pygame.font.Font(None, 60)
-
-# Función para dibujar texto con borde
-def dibujar_texto_con_borde(texto, fuente, color_texto, color_borde, x, y, grosor_borde):
-    # Dibujar el borde (desplazando el texto en todas las direcciones)
-    for dx in range(-grosor_borde, grosor_borde + 1):
-        for dy in range(-grosor_borde, grosor_borde + 1):
-            if dx != 0 or dy != 0:
-                texto_borde = fuente.render(texto, True, color_borde)
-                ventana.blit(texto_borde, (x + dx, y + dy))
+def funcionMenu():
+    """
+    Muestra el menú de selección de modo de juego.
+    Retorna: 'presa' o 'cazador' según la selección del jugador, o None si cierra
+    """
+    # Inicializar Pygame si no está inicializado
+    if not pygame.get_init():
+        pygame.init()
     
-    # Dibujar el texto principal encima
-    texto_superficie = fuente.render(texto, True, color_texto)
-    ventana.blit(texto_superficie, (x, y))
-
-# Reloj para controlar los FPS
-reloj = pygame.time.Clock()
-
-# Bucle principal
-ejecutando = True
-while ejecutando:
-    # Manejar eventos
-    for evento in pygame.event.get():
-        if evento.type == pygame.QUIT:
-            ejecutando = False
+    # Configuración de la ventana
+    ANCHO = 650
+    ALTO = 450
+    ventana = pygame.display.set_mode((ANCHO, ALTO))
+    pygame.display.set_caption("Menú del Juego")
+    
+    # Cargar y escalar la imagen de fondo
+    try:
+        fondo = pygame.image.load("fondoMenu.png")
+        fondo = pygame.transform.scale(fondo, (ANCHO, ALTO))
+    except pygame.error as e:
+        print(f"No se pudo cargar la imagen: {e}")
+        # Crear un fondo alternativo si no se encuentra la imagen
+        fondo = pygame.Surface((ANCHO, ALTO))
+        fondo.fill((135, 206, 235))  # Color celeste
+    
+    # Configurar fuentes
+    fuente_titulo = pygame.font.Font(None, 60)
+    fuente_botones = pygame.font.Font(None, 48)
+    
+    # Clase para los botones
+    class Boton:
+        def __init__(self, texto, x, y, ancho, alto):
+            self.texto = texto
+            self.rect = pygame.Rect(x, y, ancho, alto)
+            self.color_normal = (60, 60, 60)
+            self.color_hover = (80, 80, 80)
+            self.color_actual = self.color_normal
+            self.border_radius = 7
+            self.opacidad = int(255 * 0.85)  # 85% de opacidad
+            
+        def dibujar(self, superficie):
+            # Crear superficie semitransparente para el botón
+            superficie_boton = pygame.Surface((self.rect.width, self.rect.height), pygame.SRCALPHA)
+            
+            # Dibujar el fondo del botón con opacidad y border radius
+            color_con_alpha = (*self.color_actual, self.opacidad)
+            pygame.draw.rect(superficie_boton, color_con_alpha, superficie_boton.get_rect(), border_radius=self.border_radius)
+            
+            # Dibujar el texto del botón en la superficie
+            texto_render = fuente_botones.render(self.texto, True, (255, 255, 255))
+            texto_rect = texto_render.get_rect(center=(self.rect.width // 2, self.rect.height // 2))
+            superficie_boton.blit(texto_render, texto_rect)
+            
+            # Dibujar la superficie del botón en la ventana principal
+            superficie.blit(superficie_boton, self.rect.topleft)
         
-        # Detectar tecla ESC para salir
-        if evento.type == pygame.KEYDOWN:
-            if evento.key == pygame.K_ESCAPE:
-                ejecutando = False
+        def verificar_hover(self, pos_mouse):
+            if self.rect.collidepoint(pos_mouse):
+                self.color_actual = self.color_hover
+                return True
+            else:
+                self.color_actual = self.color_normal
+                return False
+        
+        def verificar_click(self, pos_mouse):
+            return self.rect.collidepoint(pos_mouse)
     
-    # Dibujar el fondo
-    ventana.blit(fondo, (0, 0))
+    # Crear los botones con padding incluido en el tamaño
+    padding = 10
+    ancho_texto_boton = 230  # Ancho del área de texto
+    alto_texto_boton = 40    # Alto del área de texto
+    ancho_boton = ancho_texto_boton + (padding * 2)
+    alto_boton = alto_texto_boton + (padding * 2)
+    x_centrado = (ANCHO - ancho_boton) // 2
+    y_primer_boton = 180
     
-    # Dibujar el título "Menú de Dificultad" centrado en la parte superior
-    texto_titulo = "Menú de Modos"
-    ancho_texto, alto_texto = fuente_titulo.size(texto_titulo)
-    x_titulo = (ANCHO - ancho_texto) // 2
-    y_titulo = 40
+    boton_presa = Boton("Modo Presa", x_centrado, y_primer_boton, ancho_boton, alto_boton)
+    boton_cazador = Boton("Modo Cazador", x_centrado, y_primer_boton + alto_boton + 30, ancho_boton, alto_boton)
     
-    # Crear y dibujar fondo semitransparente detrás del título
-    superficie_fondo_titulo = pygame.Surface((ANCHO, alto_texto + 25))
-    superficie_fondo_titulo.set_alpha(int(255 * 0.7))  # 70% de opacidad
-    superficie_fondo_titulo.fill((50, 50,50))
-    ventana.blit(superficie_fondo_titulo, (0, y_titulo - 10))
+    # Reloj para controlar los FPS
+    reloj = pygame.time.Clock()
     
-    # Dibujar borde más delgado (0.45px aproximadamente)
-    texto_borde = fuente_titulo.render(texto_titulo, True, (0, 0, 0))
-    for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
-        ventana.blit(texto_borde, (x_titulo + dx * 0.45, y_titulo + dy * 0.45))
+    # Variable para retornar la selección
+    seleccion = None
     
-    # Dibujar el texto principal
-    texto_superficie = fuente_titulo.render(texto_titulo, True, (255, 255, 255))
-    ventana.blit(texto_superficie, (x_titulo, y_titulo))
+    # Bucle principal del menú
+    ejecutando = True
+    while ejecutando:
+        pos_mouse = pygame.mouse.get_pos()
+        
+        # Manejar eventos
+        for evento in pygame.event.get():
+            if evento.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            
+            # Detectar tecla ESC para salir
+            if evento.type == pygame.KEYDOWN:
+                if evento.key == pygame.K_ESCAPE:
+                    return None
+            
+            # Detectar clicks en los botones
+            if evento.type == pygame.MOUSEBUTTONDOWN:
+                if boton_presa.verificar_click(pos_mouse):
+                    seleccion = "presa"
+                    ejecutando = False
+                elif boton_cazador.verificar_click(pos_mouse):
+                    seleccion = "cazador"
+                    ejecutando = False
+        
+        # Verificar hover en los botones
+        boton_presa.verificar_hover(pos_mouse)
+        boton_cazador.verificar_hover(pos_mouse)
+        
+        # Dibujar el fondo
+        ventana.blit(fondo, (0, 0))
+        
+        # Dibujar el título "Menú de Dificultad" centrado en la parte superior
+        texto_titulo = "Menú de Dificultad"
+        ancho_texto, alto_texto = fuente_titulo.size(texto_titulo)
+        x_titulo = (ANCHO - ancho_texto) // 2
+        y_titulo = 40
+        
+        # Crear y dibujar fondo semitransparente detrás del título
+        superficie_fondo_titulo = pygame.Surface((ANCHO, alto_texto + 20))
+        superficie_fondo_titulo.set_alpha(int(255 * 0.7))  # 70% de opacidad
+        superficie_fondo_titulo.fill((40, 40, 40))
+        ventana.blit(superficie_fondo_titulo, (0, y_titulo - 10))
+        
+        # Dibujar borde más delgado (0.45px aproximadamente)
+        texto_borde = fuente_titulo.render(texto_titulo, True, (0, 0, 0))
+        for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            ventana.blit(texto_borde, (x_titulo + dx * 0.45, y_titulo + dy * 0.45))
+        
+        # Dibujar el texto principal
+        texto_superficie = fuente_titulo.render(texto_titulo, True, (255, 255, 255))
+        ventana.blit(texto_superficie, (x_titulo, y_titulo))
+        
+        # Dibujar los botones
+        boton_presa.dibujar(ventana)
+        boton_cazador.dibujar(ventana)
+        
+        # Actualizar la pantalla
+        pygame.display.flip()
+        
+        # Controlar los FPS (60 frames por segundo)
+        reloj.tick(60)
     
-    # Actualizar la pantalla
-    pygame.display.flip()
-    
-    # Controlar los FPS (60 frames por segundo)
-    reloj.tick(60)
+    return seleccion
 
-# Salir de Pygame
-pygame.quit()
-sys.exit()
+# Si se ejecuta directamente este archivo, mostrar el menú
+if __name__ == "__main__":
+    pygame.init()
+    modo_seleccionado = funcionMenu()
+    if modo_seleccionado:
+        print(f"Modo seleccionado: {modo_seleccionado}")
+    pygame.quit()
+    sys.exit()

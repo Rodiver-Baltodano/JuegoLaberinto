@@ -1,6 +1,7 @@
 import pygame
 import fondo
 import random
+import menu  # Importar el módulo del menú
 
 def generar_mapa_aleatorio():
     """Genera un archivo de mapa aleatorio con valores 0, 2, 3, 4"""
@@ -19,25 +20,21 @@ def generar_mapa_aleatorio():
         """Coloca elementos de un tamaño específico en el mapa"""
         colocados = 0
         intentos = 0
-        max_intentos = cantidad * 50  # Evitar bucles infinitos
+        max_intentos = cantidad * 50
         
         while colocados < cantidad and intentos < max_intentos:
             intentos += 1
             
-            # Posición aleatoria
             row = random.randint(0, GRID_ROWS - 1)
             col = random.randint(0, GRID_COLS - 1)
             
-            # Para muros (tipo 2), hacer bloques de 2x2
             if tipo == 2 and tamaño == 4:
                 puede_colocar = True
                 posiciones_ocupar = []
                 
-                # Verificar si cabe un bloque 2x2
                 if row + 2 > GRID_ROWS or col + 2 > GRID_COLS:
                     puede_colocar = False
                 else:
-                    # Bloque 2x2
                     for r in range(row, row + 2):
                         for c in range(col, col + 2):
                             if mapa[r][c] != '0':
@@ -47,21 +44,17 @@ def generar_mapa_aleatorio():
                         if not puede_colocar:
                             break
                 
-                # Colocar el bloque
                 if puede_colocar:
                     for r, c in posiciones_ocupar:
                         mapa[r][c] = str(tipo)
                     colocados += 1
             
-            # Para túneles (tipo 4), hacer bloques de 2 ancho x 3 largo
             elif tipo == 4:
-                # Orientación aleatoria (horizontal o vertical)
                 horizontal = random.choice([True, False])
                 puede_colocar = True
                 posiciones_ocupar = []
                 
                 if horizontal:
-                    # 3 de ancho x 2 de alto
                     if row + 2 > GRID_ROWS or col + 3 > GRID_COLS:
                         puede_colocar = False
                     else:
@@ -73,8 +66,7 @@ def generar_mapa_aleatorio():
                                 posiciones_ocupar.append((r, c))
                             if not puede_colocar:
                                 break
-                else:  # vertical
-                    # 2 de ancho x 3 de alto
+                else:
                     if row + 3 > GRID_ROWS or col + 2 > GRID_COLS:
                         puede_colocar = False
                     else:
@@ -87,18 +79,14 @@ def generar_mapa_aleatorio():
                             if not puede_colocar:
                                 break
                 
-                # Colocar el túnel
                 if puede_colocar:
                     for r, c in posiciones_ocupar:
                         mapa[r][c] = str(tipo)
                     colocados += 1
             
             else:
-                # Para lianas: líneas de 2 cuadrados
-                # Orientación aleatoria (horizontal o vertical)
                 horizontal = random.choice([True, False])
                 
-                # Verificar si cabe el elemento
                 puede_colocar = True
                 posiciones_ocupar = []
                 
@@ -111,7 +99,7 @@ def generar_mapa_aleatorio():
                                 puede_colocar = False
                                 break
                             posiciones_ocupar.append((row, col + i))
-                else:  # vertical
+                else:
                     if row + tamaño > GRID_ROWS:
                         puede_colocar = False
                     else:
@@ -121,7 +109,6 @@ def generar_mapa_aleatorio():
                                 break
                             posiciones_ocupar.append((row + i, col))
                 
-                # Colocar el elemento
                 if puede_colocar:
                     for r, c in posiciones_ocupar:
                         mapa[r][c] = str(tipo)
@@ -129,12 +116,10 @@ def generar_mapa_aleatorio():
         
         return colocados
     
-    # Colocar elementos con sus tamaños específicos
-    tuneles_colocados = colocar_elemento(4, MAX_TUNELES, 6)  # Túneles: 2x3 = 6 cuadrados
-    lianas_colocadas = colocar_elemento(3, MAX_LIANAS, 2)    # Lianas: 2 cuadrados
-    muros_colocados = colocar_elemento(2, MAX_MUROS, 4)      # Muros: 2x2 = 4 cuadrados
+    tuneles_colocados = colocar_elemento(4, MAX_TUNELES, 6)
+    lianas_colocadas = colocar_elemento(3, MAX_LIANAS, 2)
+    muros_colocados = colocar_elemento(2, MAX_MUROS, 4)
     
-    # Escribir el mapa al archivo
     with open('mapa_generado.txt', 'w') as f:
         for row in mapa:
             f.write(''.join(row) + '\n')
@@ -144,63 +129,15 @@ def generar_mapa_aleatorio():
     print(f"  - Lianas (2 cuadrados): {lianas_colocadas}")
     print(f"  - Muros (2x2 bloques): {muros_colocados}")
 
-# Inicializar Pygame
-pygame.init()
-
-# Generar el mapa aleatorio al iniciar
-generar_mapa_aleatorio()
-
-# Configuración de la ventana
-full_map_scaled, WINDOW_WIDTH, WINDOW_HEIGHT, GRID_COLS, GRID_ROWS, GRID_SIZE_X, GRID_SIZE_Y = fondo.iniciar_fondo()
-
-ventana = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-pygame.display.set_caption("Laberinto con Fondo")
-
-# Colores (solo para colisiones, no visibles)
-colorJugador = (255, 255, 255)
-colorEnemigo = (255, 0, 0)  # Rojo para el enemigo
-
-# Cargar imágenes
-try:
-    liana_image = pygame.image.load("liana.png")
-    liana_image = pygame.transform.scale(liana_image, (GRID_SIZE_X, GRID_SIZE_Y))
-except pygame.error as e:
-    print(f"No se pudo cargar la imagen de liana: {e}")
-    liana_image = None
-
-try:
-    muro_image = pygame.image.load("muro.png")
-    muro_image = pygame.transform.scale(muro_image, (GRID_SIZE_X, GRID_SIZE_Y))
-except pygame.error as e:
-    print(f"No se pudo cargar la imagen de muro: {e}")
-    muro_image = None
-
-try:
-    tunel_image = pygame.image.load("tunel.png")
-    tunel_image = pygame.transform.scale(tunel_image, (GRID_SIZE_X, GRID_SIZE_Y))
-except pygame.error as e:
-    print(f"No se pudo cargar la imagen de tunel: {e}")
-    tunel_image = None
-
-# Variables globales
-velocidad = 3  # Movimiento en píxeles, no en celdas
-
-# Listas de grupo
-wall_group = pygame.sprite.Group()
-liana_group = pygame.sprite.Group()
-tunel_group = pygame.sprite.Group()
-
-# Reloj para controlar los FPS
-reloj = pygame.time.Clock()
-
-######################
-# Clase de personajes
 class Personaje:
-    def __init__(self, x, y, color, clase, es_enemigo=False):
-        self.x = x  # Posición en píxeles
+    def __init__(self, x, y, color, clase, es_enemigo=False, GRID_SIZE_X=0, GRID_SIZE_Y=0, WINDOW_WIDTH=0, WINDOW_HEIGHT=0):
+        self.x = x
         self.y = y
         self.color = color
-        # Hacer el jugador 80% del tamaño de la celda
+        self.GRID_SIZE_X = GRID_SIZE_X
+        self.GRID_SIZE_Y = GRID_SIZE_Y
+        self.WINDOW_WIDTH = WINDOW_WIDTH
+        self.WINDOW_HEIGHT = WINDOW_HEIGHT
         tamaño_jugador_x = int(GRID_SIZE_X * 0.8)
         tamaño_jugador_y = int(GRID_SIZE_Y * 0.8)
         self.image = pygame.Surface((tamaño_jugador_x, tamaño_jugador_y))
@@ -208,43 +145,32 @@ class Personaje:
         self.clase = clase
         self.es_enemigo = es_enemigo
         
-        # Variables para enemigo
         if es_enemigo:
             self.velocidad_enemigo = 2
             self.direccion = random.choice(['LEFT', 'RIGHT', 'UP', 'DOWN'])
             self.tiempo_cambio_direccion = pygame.time.get_ticks()
-            self.intervalo_cambio = random.randint(1000, 3000)  # Cambiar dirección cada 1-3 segundos
+            self.intervalo_cambio = random.randint(1000, 3000)
             self.modo_persecucion = False
             self.tiempo_ultima_persecucion = pygame.time.get_ticks()
             self.tiempo_inicio_persecucion = 0
 
-    def update(self):
+    def update(self, ventana):
         self.image.fill(self.color)
         self.rect.x = self.x
         self.rect.y = self.y
         ventana.blit(self.image, self.rect)
     
     def get_grid_positions(self):
-        """
-        ============================================
-        FUNCIÓN DE DETECCIÓN DE COLISIONES #1
-        ============================================
-        Retorna todas las posiciones del grid que ocupa el jugador
-        Esta función calcula qué celdas del mapa ocupa el personaje
-        """
-        # Obtener las esquinas del rectángulo del jugador
         left = self.x
         right = self.x + self.image.get_width()
         top = self.y
         bottom = self.y + self.image.get_height()
         
-        # Convertir a coordenadas de grid
-        grid_left = left // GRID_SIZE_X
-        grid_right = right // GRID_SIZE_X
-        grid_top = top // GRID_SIZE_Y
-        grid_bottom = bottom // GRID_SIZE_Y
+        grid_left = left // self.GRID_SIZE_X
+        grid_right = right // self.GRID_SIZE_X
+        grid_top = top // self.GRID_SIZE_Y
+        grid_bottom = bottom // self.GRID_SIZE_Y
         
-        # Recopilar todas las celdas ocupadas
         posiciones = []
         for grid_y in range(grid_top, grid_bottom + 1):
             for grid_x in range(grid_left, grid_right + 1):
@@ -252,24 +178,15 @@ class Personaje:
         
         return posiciones
 
-    def colision_con_obstaculos(self):
-        """
-        ============================================
-        FUNCIÓN DE DETECCIÓN DE COLISIONES #2
-        ============================================
-        Verifica si hay colisión con cualquier obstáculo que lo bloquee
-        Esta es la función principal que detecta si el personaje choca con muros o túneles
-        """
+    def colision_con_obstaculos(self, wall_group, tunel_group):
         posiciones = self.get_grid_positions()
         
-        # Verificar muros (tile '2' en el mapa)
         for grid_x, grid_y in posiciones:
             for muro in wall_group:
                 if muro.grid_x == grid_x and muro.grid_y == grid_y:
                     if muro.bloquea_a(self):
                         return True
         
-        # Verificar túneles (tile '4' en el mapa)
         for grid_x, grid_y in posiciones:
             for tunel in tunel_group:
                 if tunel.grid_x == grid_x and tunel.grid_y == grid_y:
@@ -278,8 +195,7 @@ class Personaje:
         
         return False
     
-    def esta_en_liana(self):
-        """Verifica si el personaje está sobre una liana"""
+    def esta_en_liana(self, liana_group):
         posiciones = self.get_grid_positions()
         
         for grid_x, grid_y in posiciones:
@@ -288,37 +204,30 @@ class Personaje:
                     return True
         return False
     
-    def mover_enemigo(self, objetivo):
-        """Mueve el enemigo de forma aleatoria o persiguiendo al objetivo"""
+    def mover_enemigo(self, objetivo, wall_group, tunel_group, liana_group):
         tiempo_actual = pygame.time.get_ticks()
         
-        # Sistema de persecución cada 10 segundos durante 3 segundos
-        if tiempo_actual - self.tiempo_ultima_persecucion >= 10000:  # 10 segundos
+        if tiempo_actual - self.tiempo_ultima_persecucion >= 10000:
             self.modo_persecucion = True
             self.tiempo_inicio_persecucion = tiempo_actual
             self.tiempo_ultima_persecucion = tiempo_actual
         
-        # Desactivar persecución después de 3 segundos
-        if self.modo_persecucion and tiempo_actual - self.tiempo_inicio_persecucion >= 3000:  # 3 segundos
+        if self.modo_persecucion and tiempo_actual - self.tiempo_inicio_persecucion >= 3000:
             self.modo_persecucion = False
         
-        # Aplicar ralentización por lianas
         velocidad_actual = self.velocidad_enemigo
-        if self.esta_en_liana():
+        if self.esta_en_liana(liana_group):
             velocidad_actual -= 1
             if velocidad_actual < 1:
                 velocidad_actual = 1
         
-        # Guardar posición anterior
         pos_anterior_x = self.x
         pos_anterior_y = self.y
         
         if self.modo_persecucion:
-            # Modo persecución: ir hacia el jugador
             dx = objetivo.x - self.x
             dy = objetivo.y - self.y
             
-            # Moverse en la dirección del jugador
             if abs(dx) > abs(dy):
                 if dx > 0:
                     self.x += velocidad_actual
@@ -330,13 +239,11 @@ class Personaje:
                 else:
                     self.y -= velocidad_actual
         else:
-            # Modo aleatorio: cambiar dirección cada cierto tiempo
             if tiempo_actual - self.tiempo_cambio_direccion >= self.intervalo_cambio:
                 self.direccion = random.choice(['LEFT', 'RIGHT', 'UP', 'DOWN'])
                 self.tiempo_cambio_direccion = tiempo_actual
                 self.intervalo_cambio = random.randint(1000, 3000)
             
-            # Moverse en la dirección actual
             if self.direccion == 'LEFT':
                 self.x -= velocidad_actual
             elif self.direccion == 'RIGHT':
@@ -346,313 +253,335 @@ class Personaje:
             elif self.direccion == 'DOWN':
                 self.y += velocidad_actual
         
-        # Verificar colisiones y revertir si es necesario
-        if self.colision_con_obstaculos():
-            # Revertir a posición anterior
+        if self.colision_con_obstaculos(wall_group, tunel_group):
             self.x = pos_anterior_x
             self.y = pos_anterior_y
             
-            # Cambiar dirección si está en modo aleatorio
             if not self.modo_persecucion:
                 self.direccion = random.choice(['LEFT', 'RIGHT', 'UP', 'DOWN'])
         
-        # Mantener dentro de los límites
         if self.x < 0:
             self.x = 0
             self.direccion = 'RIGHT'
-        if self.x + self.image.get_width() >= WINDOW_WIDTH:
-            self.x = WINDOW_WIDTH - self.image.get_width()
+        if self.x + self.image.get_width() >= self.WINDOW_WIDTH:
+            self.x = self.WINDOW_WIDTH - self.image.get_width()
             self.direccion = 'LEFT'
         if self.y < 0:
             self.y = 0
             self.direccion = 'DOWN'
-        if self.y + self.image.get_height() >= WINDOW_HEIGHT:
-            self.y = WINDOW_HEIGHT - self.image.get_height()
+        if self.y + self.image.get_height() >= self.WINDOW_HEIGHT:
+            self.y = self.WINDOW_HEIGHT - self.image.get_height()
             self.direccion = 'UP'
     
     def colisiona_con(self, otro_personaje):
-        """
-        ============================================
-        FUNCIÓN DE DETECCIÓN DE COLISIONES #3
-        ============================================
-        Verifica si este personaje colisiona con otro personaje
-        Se usa para detectar cuando el enemigo atrapa al jugador
-        """
         return self.rect.colliderect(otro_personaje.rect)
 
-# Clase base de obstáculos
 class Obstaculo(pygame.sprite.Sprite):
-    def __init__(self, grid_x, grid_y, image=None):
+    def __init__(self, grid_x, grid_y, image, GRID_SIZE_X, GRID_SIZE_Y):
         super().__init__()
         self.grid_x = grid_x
         self.grid_y = grid_y
         
         if image:
-            # Crear una copia de la imagen para evitar compartir la misma superficie
             self.image = image.copy()
         else:
-            # Superficie transparente si no hay imagen
             self.image = pygame.Surface((GRID_SIZE_X, GRID_SIZE_Y), pygame.SRCALPHA)
-            self.image.fill((0, 0, 0, 0))  # Completamente transparente
+            self.image.fill((0, 0, 0, 0))
         
         self.rect = self.image.get_rect()
         self.rect.x = self.grid_x * GRID_SIZE_X
         self.rect.y = self.grid_y * GRID_SIZE_Y
     
     def bloquea_a(self, personaje):
-        """Método base - cada obstáculo define a quién bloquea"""
         return False
 
-# Clase Muro - Bloquea a todos
 class Muro(Obstaculo):
-    def __init__(self, grid_x, grid_y, image=None):
-        super().__init__(grid_x, grid_y, image)
+    def __init__(self, grid_x, grid_y, image, GRID_SIZE_X, GRID_SIZE_Y):
+        super().__init__(grid_x, grid_y, image, GRID_SIZE_X, GRID_SIZE_Y)
         self.tipo = "muro"
     
     def bloquea_a(self, personaje):
-        """
-        ============================================
-        FUNCIÓN DE DETECCIÓN DE COLISIONES #4
-        ============================================
-        Los muros bloquean a todos los personajes (jugador y enemigo)
-        Esta función se llama desde colision_con_obstaculos()
-        """
         return True
 
-# Clase Liana - Ralentiza a todos
 class Liana(Obstaculo):
-    def __init__(self, grid_x, grid_y, image=None):
-        super().__init__(grid_x, grid_y, image)
+    def __init__(self, grid_x, grid_y, image, GRID_SIZE_X, GRID_SIZE_Y):
+        super().__init__(grid_x, grid_y, image, GRID_SIZE_X, GRID_SIZE_Y)
         self.tipo = "liana"
     
     def bloquea_a(self, personaje):
-        """Las lianas no bloquean a nadie, solo ralentizan"""
         return False
     
     def ralentiza_a(self, personaje):
-        """Las lianas ralentizan a todos los personajes"""
         return True
 
-# Clase Túnel - Solo bloquea a no-presas
 class Tunel(Obstaculo):
-    def __init__(self, grid_x, grid_y, image=None):
-        super().__init__(grid_x, grid_y, image)
+    def __init__(self, grid_x, grid_y, image, GRID_SIZE_X, GRID_SIZE_Y):
+        super().__init__(grid_x, grid_y, image, GRID_SIZE_X, GRID_SIZE_Y)
         self.tipo = "tunel"
     
     def bloquea_a(self, personaje):
-        """Los túneles solo bloquean a los que NO son presas"""
         return personaje.clase != "presa"
 
-####################
-# Lee el mapa del texto generado
-world_data = []
-spawn_position = (1, 1)  # Posición por defecto
-
-with open('mapa_generado.txt', 'r') as world:
-    for line in world:
-        world_data.append(line.strip())
-
-# Lee que es un camino, que es un muro, etc.
-for row, tiles in enumerate(world_data):
-    for col, tile in enumerate(tiles):
-        if tile == '2':  # Muro
-            muro = Muro(col, row, image=muro_image)
-            wall_group.add(muro)
-        elif tile == '3':  # Liana
-            liana = Liana(col, row, image=liana_image)
-            liana_group.add(liana)
-        elif tile == '4':  # Túnel
-            tunel = Tunel(col, row, image=tunel_image)
-            tunel_group.add(tunel)
-
-# Buscar una posición inicial válida (un camino)
-for row, tiles in enumerate(world_data):
-    for col, tile in enumerate(tiles):
-        if tile == '0':
-            spawn_position = (col, row)
+def iniciar_juego():
+    """Función principal que inicia el juego y maneja el bucle del menú"""
+    pygame.init()
+    
+    while True:  # Bucle principal del menú
+        # Mostrar menú y obtener selección
+        modo_seleccionado = menu.funcionMenu()
+        
+        # Si el usuario cierra el menú, salir del juego
+        if modo_seleccionado is None:
             break
-    if spawn_position != (1, 1):
-        break
-
-# Define el jugador (en píxeles, centrado en la celda de spawn)
-spawn_x_pixel = spawn_position[0] * GRID_SIZE_X + (GRID_SIZE_X - int(GRID_SIZE_X * 0.8)) // 2
-spawn_y_pixel = spawn_position[1] * GRID_SIZE_Y + (GRID_SIZE_Y - int(GRID_SIZE_Y * 0.8)) // 2
-jugador = Personaje(spawn_x_pixel, spawn_y_pixel, colorJugador, clase="presa")
-
-# Buscar una posición válida para el enemigo (lejos del jugador)
-enemigo_spawn = None
-for row, tiles in enumerate(world_data):
-    for col, tile in enumerate(tiles):
-        if tile == '0':
-            # Calcular distancia al jugador
-            dist_x = abs(col - spawn_position[0])
-            dist_y = abs(row - spawn_position[1])
-            if dist_x + dist_y > 10:  # Al menos 10 celdas de distancia
-                enemigo_spawn = (col, row)
+        
+        # Si selecciona modo cazador (aún no implementado), volver al menú
+        if modo_seleccionado == "cazador":
+            print("Modo Cazador aún no está implementado")
+            continue  # Volver al menú
+        
+        print(f"Modo seleccionado: {modo_seleccionado}")
+        
+        # Generar nuevo mapa
+        generar_mapa_aleatorio()
+        
+        # Configuración de la ventana
+        full_map_scaled, WINDOW_WIDTH, WINDOW_HEIGHT, GRID_COLS, GRID_ROWS, GRID_SIZE_X, GRID_SIZE_Y = fondo.iniciar_fondo()
+        
+        ventana = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+        pygame.display.set_caption("Laberinto con Fondo")
+        
+        # Colores
+        colorJugador = (255, 255, 255)
+        colorEnemigo = (255, 0, 0)
+        
+        # Cargar imágenes
+        try:
+            liana_image = pygame.image.load("liana.png")
+            liana_image = pygame.transform.scale(liana_image, (GRID_SIZE_X, GRID_SIZE_Y))
+        except pygame.error as e:
+            print(f"No se pudo cargar la imagen de liana: {e}")
+            liana_image = None
+        
+        try:
+            muro_image = pygame.image.load("muro.png")
+            muro_image = pygame.transform.scale(muro_image, (GRID_SIZE_X, GRID_SIZE_Y))
+        except pygame.error as e:
+            print(f"No se pudo cargar la imagen de muro: {e}")
+            muro_image = None
+        
+        try:
+            tunel_image = pygame.image.load("tunel.png")
+            tunel_image = pygame.transform.scale(tunel_image, (GRID_SIZE_X, GRID_SIZE_Y))
+        except pygame.error as e:
+            print(f"No se pudo cargar la imagen de tunel: {e}")
+            tunel_image = None
+        
+        velocidad = 3
+        
+        wall_group = pygame.sprite.Group()
+        liana_group = pygame.sprite.Group()
+        tunel_group = pygame.sprite.Group()
+        
+        reloj = pygame.time.Clock()
+        
+        # Leer mapa
+        world_data = []
+        spawn_position = (1, 1)
+        
+        with open('mapa_generado.txt', 'r') as world:
+            for line in world:
+                world_data.append(line.strip())
+        
+        # Crear obstáculos
+        for row, tiles in enumerate(world_data):
+            for col, tile in enumerate(tiles):
+                if tile == '2':
+                    muro = Muro(col, row, muro_image, GRID_SIZE_X, GRID_SIZE_Y)
+                    wall_group.add(muro)
+                elif tile == '3':
+                    liana = Liana(col, row, liana_image, GRID_SIZE_X, GRID_SIZE_Y)
+                    liana_group.add(liana)
+                elif tile == '4':
+                    tunel = Tunel(col, row, tunel_image, GRID_SIZE_X, GRID_SIZE_Y)
+                    tunel_group.add(tunel)
+        
+        # Buscar posición de spawn
+        for row, tiles in enumerate(world_data):
+            for col, tile in enumerate(tiles):
+                if tile == '0':
+                    spawn_position = (col, row)
+                    break
+            if spawn_position != (1, 1):
                 break
-    if enemigo_spawn:
-        break
-
-# Si no encuentra posición lejana, usar cualquier camino
-if not enemigo_spawn:
-    for row, tiles in enumerate(world_data):
-        for col, tile in enumerate(tiles):
-            if tile == '0' and (col, row) != spawn_position:
-                enemigo_spawn = (col, row)
+        
+        # Crear jugador
+        spawn_x_pixel = spawn_position[0] * GRID_SIZE_X + (GRID_SIZE_X - int(GRID_SIZE_X * 0.8)) // 2
+        spawn_y_pixel = spawn_position[1] * GRID_SIZE_Y + (GRID_SIZE_Y - int(GRID_SIZE_Y * 0.8)) // 2
+        jugador = Personaje(spawn_x_pixel, spawn_y_pixel, colorJugador, clase="presa", 
+                           GRID_SIZE_X=GRID_SIZE_X, GRID_SIZE_Y=GRID_SIZE_Y,
+                           WINDOW_WIDTH=WINDOW_WIDTH, WINDOW_HEIGHT=WINDOW_HEIGHT)
+        
+        # Buscar posición para enemigo
+        enemigo_spawn = None
+        for row, tiles in enumerate(world_data):
+            for col, tile in enumerate(tiles):
+                if tile == '0':
+                    dist_x = abs(col - spawn_position[0])
+                    dist_y = abs(row - spawn_position[1])
+                    if dist_x + dist_y > 10:
+                        enemigo_spawn = (col, row)
+                        break
+            if enemigo_spawn:
                 break
-        if enemigo_spawn:
+        
+        if not enemigo_spawn:
+            for row, tiles in enumerate(world_data):
+                for col, tile in enumerate(tiles):
+                    if tile == '0' and (col, row) != spawn_position:
+                        enemigo_spawn = (col, row)
+                        break
+                if enemigo_spawn:
+                    break
+        
+        # Crear enemigo
+        enemigo_x_pixel = enemigo_spawn[0] * GRID_SIZE_X + (GRID_SIZE_X - int(GRID_SIZE_X * 0.8)) // 2
+        enemigo_y_pixel = enemigo_spawn[1] * GRID_SIZE_Y + (GRID_SIZE_Y - int(GRID_SIZE_Y * 0.8)) // 2
+        enemigo = Personaje(enemigo_x_pixel, enemigo_y_pixel, colorEnemigo, clase="cazador", es_enemigo=True,
+                           GRID_SIZE_X=GRID_SIZE_X, GRID_SIZE_Y=GRID_SIZE_Y,
+                           WINDOW_WIDTH=WINDOW_WIDTH, WINDOW_HEIGHT=WINDOW_HEIGHT)
+        
+        def dibujar_grid():
+            GRIS = (100, 100, 100)
+            
+            for x in range(0, WINDOW_WIDTH, GRID_SIZE_X):
+                pygame.draw.line(ventana, GRIS, (x, 0), (x, WINDOW_HEIGHT), 1)
+            
+            for y in range(0, WINDOW_HEIGHT, GRID_SIZE_Y):
+                pygame.draw.line(ventana, GRIS, (0, y), (WINDOW_WIDTH, y), 1)
+        
+        def movimiento():
+            key = pygame.key.get_pressed()
+            
+            velocidad_actual = velocidad
+            if jugador.esta_en_liana(liana_group):
+                velocidad_actual -= 1
+                if velocidad_actual < 1:
+                    velocidad_actual = 1
+            
+            pos_anterior_x = jugador.x
+            pos_anterior_y = jugador.y
+            
+            if key[pygame.K_LEFT]:
+                jugador.x -= velocidad_actual
+                if jugador.x < 0:
+                    jugador.x = 0
+                elif jugador.colision_con_obstaculos(wall_group, tunel_group):
+                    jugador.x = pos_anterior_x
+            
+            elif key[pygame.K_RIGHT]:
+                jugador.x += velocidad_actual
+                if jugador.x + jugador.image.get_width() >= WINDOW_WIDTH:
+                    jugador.x = WINDOW_WIDTH - jugador.image.get_width()
+                elif jugador.colision_con_obstaculos(wall_group, tunel_group):
+                    jugador.x = pos_anterior_x
+            
+            elif key[pygame.K_UP]:
+                jugador.y -= velocidad_actual
+                if jugador.y < 0:
+                    jugador.y = 0
+                elif jugador.colision_con_obstaculos(wall_group, tunel_group):
+                    jugador.y = pos_anterior_y
+            
+            elif key[pygame.K_DOWN]:
+                jugador.y += velocidad_actual
+                if jugador.y + jugador.image.get_height() >= WINDOW_HEIGHT:
+                    jugador.y = WINDOW_HEIGHT - jugador.image.get_height()
+                elif jugador.colision_con_obstaculos(wall_group, tunel_group):
+                    jugador.y = pos_anterior_y
+        
+        # Bucle principal del juego
+        ejecutando = True
+        mostrar_grid = False
+        juego_terminado = False
+        volver_menu = False
+        
+        pygame.font.init()
+        fuente_grande = pygame.font.Font(None, 74)
+        fuente_mediana = pygame.font.Font(None, 36)
+        
+        while ejecutando:
+            if full_map_scaled:
+                ventana.blit(full_map_scaled, (0, 0))
+            
+            wall_group.draw(ventana)
+            liana_group.draw(ventana)
+            tunel_group.draw(ventana)
+            
+            if not juego_terminado:
+                movimiento()
+                enemigo.mover_enemigo(jugador, wall_group, tunel_group, liana_group)
+                
+                if jugador.colisiona_con(enemigo):
+                    juego_terminado = True
+            
+            for evento in pygame.event.get():
+                if evento.type == pygame.QUIT:
+                    pygame.quit()
+                    import sys
+                    sys.exit()
+                elif evento.type == pygame.KEYDOWN:
+                    if evento.key == pygame.K_ESCAPE:
+                        ejecutando = False
+                        volver_menu = False  # Salir completamente
+                    elif evento.key == pygame.K_g:
+                        mostrar_grid = not mostrar_grid
+                    elif evento.key == pygame.K_r and juego_terminado:
+                        juego_terminado = False
+                        jugador.x = spawn_x_pixel
+                        jugador.y = spawn_y_pixel
+                        enemigo.x = enemigo_x_pixel
+                        enemigo.y = enemigo_y_pixel
+                        enemigo.tiempo_ultima_persecucion = pygame.time.get_ticks()
+                    elif evento.key == pygame.K_m and juego_terminado:
+                        # Volver al menú
+                        ejecutando = False
+                        volver_menu = True
+            
+            if mostrar_grid:
+                dibujar_grid()
+            
+            jugador.update(ventana)
+            enemigo.update(ventana)
+            
+            if juego_terminado:
+                overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
+                overlay.set_alpha(128)
+                overlay.fill((0, 0, 0))
+                ventana.blit(overlay, (0, 0))
+                
+                texto_game_over = fuente_grande.render("GAME OVER", True, (255, 0, 0))
+                texto_reiniciar = fuente_mediana.render("Presiona R para reiniciar", True, (255, 255, 255))
+                texto_menu = fuente_mediana.render("Presiona M para volver al menu", True, (255, 255, 255))
+                
+                rect_game_over = texto_game_over.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 - 80))
+                rect_reiniciar = texto_reiniciar.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 + 20))
+                rect_menu = texto_menu.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 + 70))
+                
+                ventana.blit(texto_game_over, rect_game_over)
+                ventana.blit(texto_reiniciar, rect_reiniciar)
+                ventana.blit(texto_menu, rect_menu)
+            
+            pygame.display.flip()
+            reloj.tick(60)
+        
+        # Si no se quiere volver al menú, salir del bucle principal
+        if not volver_menu:
             break
+    
+    pygame.quit()
+    import sys
+    sys.exit()
 
-# Crear enemigo
-enemigo_x_pixel = enemigo_spawn[0] * GRID_SIZE_X + (GRID_SIZE_X - int(GRID_SIZE_X * 0.8)) // 2
-enemigo_y_pixel = enemigo_spawn[1] * GRID_SIZE_Y + (GRID_SIZE_Y - int(GRID_SIZE_Y * 0.8)) // 2
-enemigo = Personaje(enemigo_x_pixel, enemigo_y_pixel, colorEnemigo, clase="cazador", es_enemigo=True)
-
-def dibujar_grid():
-    """Dibuja las líneas de la cuadrícula sobre la ventana"""
-    GRIS = (100, 100, 100)
-    
-    for x in range(0, WINDOW_WIDTH, GRID_SIZE_X):
-        pygame.draw.line(ventana, GRIS, (x, 0), (x, WINDOW_HEIGHT), 1)
-    
-    for y in range(0, WINDOW_HEIGHT, GRID_SIZE_Y):
-        pygame.draw.line(ventana, GRIS, (0, y), (WINDOW_WIDTH, y), 1)
-
-def movimiento():
-    """
-    ============================================
-    CONTROL DE MOVIMIENTO DEL JUGADOR
-    ============================================
-    Esta función controla el movimiento del jugador y evita el movimiento diagonal
-    Solo permite moverse en UNA dirección a la vez (arriba, abajo, izquierda o derecha)
-    """
-    key = pygame.key.get_pressed()
-    
-    # Aplicar ralentización por lianas
-    velocidad_actual = velocidad
-    if jugador.esta_en_liana():
-        velocidad_actual -= 1
-        if velocidad_actual < 1:
-            velocidad_actual = 1
-    
-    # Guardar posición anterior
-    pos_anterior_x = jugador.x
-    pos_anterior_y = jugador.y
-    
-    # PRIORIDAD DE MOVIMIENTO: Solo una dirección a la vez (sin diagonal)
-    # Se verifica en este orden: IZQUIERDA -> DERECHA -> ARRIBA -> ABAJO
-    
-    # Movimiento horizontal (izquierda tiene prioridad)
-    if key[pygame.K_LEFT]:
-        jugador.x -= velocidad_actual
-        if jugador.x < 0:
-            jugador.x = 0
-        elif jugador.colision_con_obstaculos():
-            jugador.x = pos_anterior_x
-    
-    elif key[pygame.K_RIGHT]:
-        jugador.x += velocidad_actual
-        if jugador.x + jugador.image.get_width() >= WINDOW_WIDTH:
-            jugador.x = WINDOW_WIDTH - jugador.image.get_width()
-        elif jugador.colision_con_obstaculos():
-            jugador.x = pos_anterior_x
-    
-    # Movimiento vertical (solo si NO se está moviendo horizontal)
-    elif key[pygame.K_UP]:
-        jugador.y -= velocidad_actual
-        if jugador.y < 0:
-            jugador.y = 0
-        elif jugador.colision_con_obstaculos():
-            jugador.y = pos_anterior_y
-    
-    elif key[pygame.K_DOWN]:
-        jugador.y += velocidad_actual
-        if jugador.y + jugador.image.get_height() >= WINDOW_HEIGHT:
-            jugador.y = WINDOW_HEIGHT - jugador.image.get_height()
-        elif jugador.colision_con_obstaculos():
-            jugador.y = pos_anterior_y
-
-##################################
-# Bucle principal del juego
-ejecutando = True
-mostrar_grid = False  # Grid oculto por defecto
-juego_terminado = False
-
-# Fuente para mensajes
-pygame.font.init()
-fuente_grande = pygame.font.Font(None, 74)
-fuente_mediana = pygame.font.Font(None, 36)
-
-while ejecutando:
-    # Dibujar fondo
-    if full_map_scaled:
-        ventana.blit(full_map_scaled, (0, 0))
-    
-    # Dibujar obstáculos
-    wall_group.draw(ventana)
-    liana_group.draw(ventana)
-    tunel_group.draw(ventana)
-    
-    if not juego_terminado:
-        # Procesar movimiento del jugador
-        movimiento()
-        
-        # Mover enemigo
-        enemigo.mover_enemigo(jugador)
-        
-        # Verificar colisión entre jugador y enemigo
-        if jugador.colisiona_con(enemigo):
-            juego_terminado = True
-    
-    # Procesar eventos
-    for evento in pygame.event.get():
-        if evento.type == pygame.QUIT:
-            ejecutando = False
-        elif evento.type == pygame.KEYDOWN:
-            if evento.key == pygame.K_ESCAPE:
-                ejecutando = False
-            elif evento.key == pygame.K_g:
-                mostrar_grid = not mostrar_grid
-            elif evento.key == pygame.K_r and juego_terminado:
-                # Reiniciar juego
-                juego_terminado = False
-                jugador.x = spawn_x_pixel
-                jugador.y = spawn_y_pixel
-                enemigo.x = enemigo_x_pixel
-                enemigo.y = enemigo_y_pixel
-                enemigo.tiempo_ultima_persecucion = pygame.time.get_ticks()
-    
-    # Dibujar grid si está activado
-    if mostrar_grid:
-        dibujar_grid()
-    
-    # Actualizar personajes
-    jugador.update()
-    enemigo.update()
-    
-    # Mostrar mensaje de Game Over
-    if juego_terminado:
-        # Fondo semi-transparente
-        overlay = pygame.Surface((WINDOW_WIDTH, WINDOW_HEIGHT))
-        overlay.set_alpha(128)
-        overlay.fill((0, 0, 0))
-        ventana.blit(overlay, (0, 0))
-        
-        # Texto Game Over
-        texto_game_over = fuente_grande.render("GAME OVER", True, (255, 0, 0))
-        texto_reiniciar = fuente_mediana.render("Presiona R para reiniciar", True, (255, 255, 255))
-        
-        rect_game_over = texto_game_over.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 - 50))
-        rect_reiniciar = texto_reiniciar.get_rect(center=(WINDOW_WIDTH // 2, WINDOW_HEIGHT // 2 + 50))
-        
-        ventana.blit(texto_game_over, rect_game_over)
-        ventana.blit(texto_reiniciar, rect_reiniciar)
-    
-    # Actualizar pantalla
-    pygame.display.flip()
-    reloj.tick(60)
-
-# Cerrar Pygame
-pygame.quit()
-import sys
-sys.exit()
+# Ejecutar el juego
+if __name__ == "__main__":
+    iniciar_juego()
