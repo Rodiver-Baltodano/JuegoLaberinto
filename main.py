@@ -39,6 +39,7 @@ Fondo = pygame.transform.scale(Fondo, (ancho, alto))
 
 fuente_grande = pygame.font.Font(None, 74)
 fuente_mediana = pygame.font.Font(None, 36)
+fuente_pequena = pygame.font.Font(None, 24)
 
 
 #Variables globales
@@ -49,6 +50,14 @@ GRID_ROWS = 20
 MAX_TUNELES = 5
 MAX_LIANAS = 5
 MAX_MUROS = 10
+
+Puntuacion = 0
+
+# Variables para la barra de stamina
+stamina_max = 50
+stamina_actual = 50
+regeneracion_stamina = 1 
+consumo_stamina = 5
 
 
 #Mapa
@@ -84,15 +93,17 @@ class personaje:
         self.rect = self.image.get_rect(topleft=(self.x, self.y))
         self.clase = clase
         self.cantidadMinas = cantidadMinas
-
-    #Actualiza el personaje dentro del grid    
+        self.vivo = True  
+    
     def update(self):
-        self.image.fill(self.color)
-
-        self.rect.x = self.x * tamano_celda
-        self.rect.y = self.y * tamano_celda
-
-        ventana.blit(self.image, self.rect)
+        if self.vivo:  
+            self.image.fill(self.color)
+            self.rect.x = self.x * tamano_celda
+            self.rect.y = self.y * tamano_celda
+            ventana.blit(self.image, self.rect)
+        else:
+            self.x = 999
+            self.y = 999
 
     #Revisa si hay colisiones
     def colisionMuro(self):
@@ -134,6 +145,7 @@ class personaje:
         else:
             for Mina in mina_group:
                 if Mina.x == self.x and Mina.y == self.y:
+                    Mina.kill()  
                     return True
             return False
 
@@ -255,7 +267,6 @@ def dibujar_grid():
     """
     # Dibujar líneas verticales
     for x in range(0, ancho, tamano_celda):  # Va desde 0 hasta ancho, saltando cada tamano_celda píxeles
-        # pygame.draw.line(superficie, color, punto_inicio, punto_fin, grosor)
         pygame.draw.line(ventana, GRIS, (x, 0), (x, alto), 1)  # Línea de arriba a abajo
     
     # Dibujar líneas horizontales
@@ -264,67 +275,74 @@ def dibujar_grid():
 
 #Define el movimiento del jugador
 def movimiento():
-    global velocidad
+    global velocidad, stamina_actual, consumo_stamina
     key = pygame.key.get_pressed()
+    
+    corriendo = key[pygame.K_LSHIFT] or key[pygame.K_RSHIFT]
+
+    if corriendo and stamina_actual > 0:
+        velocidad_actual = velocidad * 2
+        stamina_actual -= consumo_stamina
+        stamina_actual = max(0, stamina_actual)  # Evitar valores negativos
+    else:
+        velocidad_actual = velocidad
+    
     if key[pygame.K_LEFT] == True :
-        jugador.x -= velocidad
+        jugador.x -= velocidad_actual
         if jugador.colisionMuro() or jugador.colisionLiana() or jugador.colisionTunel(): #Devuelve al jugador si no puede pasar por un camino
-            jugador.x += velocidad
+            jugador.x += velocidad_actual
         elif jugador.x < 0:
             jugador.x = 0
         
     elif key[pygame.K_RIGHT] == True :
-        jugador.x += velocidad
+        jugador.x += velocidad_actual
         if jugador.x > 24:
             jugador.x = 24
         elif jugador.colisionMuro() or jugador.colisionLiana() or jugador.colisionTunel():
-            jugador.x -= velocidad
+            jugador.x -= velocidad_actual
 
     elif key[pygame.K_UP]== True :
-        jugador.y -= velocidad
+        jugador.y -= velocidad_actual
         if jugador.y < 0:
             jugador.y = 0
         if jugador.colisionMuro() or jugador.colisionLiana() or jugador.colisionTunel():
-            jugador.y += velocidad
+            jugador.y += velocidad_actual
 
     elif key[pygame.K_DOWN]== True :
-        jugador.y += velocidad
+        jugador.y += velocidad_actual
         if jugador.y > 19:
                 jugador.y = 19
         if jugador.colisionMuro() or jugador.colisionLiana() or jugador.colisionTunel():
-            jugador.y -= velocidad
+            jugador.y -= velocidad_actual
     
 
     elif key[pygame.K_a] == True :
-        jugador.x -= velocidad
+        jugador.x -= velocidad_actual
         if jugador.colisionMuro() or jugador.colisionLiana() or jugador.colisionTunel(): 
-            jugador.x += velocidad
+            jugador.x += velocidad_actual
         elif jugador.x < 0:
             jugador.x = 0
         
     elif key[pygame.K_d] == True :
-        jugador.x += velocidad
+        jugador.x += velocidad_actual
         if jugador.x > 24:
             jugador.x = 24
         elif jugador.colisionMuro() or jugador.colisionLiana() or jugador.colisionTunel():
-            jugador.x -= velocidad
+            jugador.x -= velocidad_actual
 
     elif key[pygame.K_w]== True :
-        jugador.y -= velocidad
+        jugador.y -= velocidad_actual
         if jugador.y < 0:
             jugador.y = 0
         if jugador.colisionMuro() or jugador.colisionLiana() or jugador.colisionTunel():
-            jugador.y += velocidad
+            jugador.y += velocidad_actual
 
     elif key[pygame.K_s]== True :
-        jugador.y += velocidad
+        jugador.y += velocidad_actual
         if jugador.y > 19:
                 jugador.y = 19
         if jugador.colisionMuro() or jugador.colisionLiana() or jugador.colisionTunel():
-            jugador.y -= velocidad
-
-    elif key[pygame.K_SPACE]== True:
-        jugador.colocarMina()
+            jugador.y -= velocidad_actual
 
 def movimientoEnemigo(self, objetivo):
     global velocidad
@@ -396,6 +414,7 @@ ejecutando = True
 juego_terminado = False
 
 while ejecutando:
+
     ventana.blit(Fondo, (0,0))
     wall_group.draw(ventana)
     liana_group.draw(ventana)
@@ -403,15 +422,15 @@ while ejecutando:
     mina_group.draw(ventana)
     
 
-    # Procesar todos los eventos que ocurren (clicks, teclas, cierre de ventana, etc.)
-    for evento in pygame.event.get():  # Obtiene lista de todos los eventos ocurridos desde el último frame
-        if evento.type == pygame.QUIT:  # Si el usuario cierra la ventana (click en X)
-            ejecutando = False  # Cambia la bandera para salir del bucle
+    for evento in pygame.event.get():  
+        if evento.type == pygame.QUIT:  
+            ejecutando = False  
         elif evento.type == pygame.KEYDOWN:
             if evento.key == pygame.K_r and juego_terminado:
                 # Reiniciar juego
                 juego_terminado = False
                 
+                Puntuacion = 0
                 jugador.x, jugador.y = spawn_position[0], spawn_position[1]
                 enemigo1.x, enemigo1.y = En1Spawn_Position[0], En1Spawn_Position[1]
                 wall_group = pygame.sprite.Group()
@@ -421,18 +440,40 @@ while ejecutando:
                 spawn_position = []  
                 En1Spawn_Position = []
                 generar_mapa()
+            elif evento.key == pygame.K_SPACE:
+                jugador.colocarMina()
     
     
     dibujar_grid()  # Llama a la función que dibuja las líneas del grid
     if not juego_terminado:
-        movimiento() #Revisa por movimiento
+        movimiento() 
         movimientoEnemigo(enemigo1, jugador)
         if enemigo1.colisionMina() == True:
-            enemigo1.kill()
-        if jugador.x == enemigo1.x and jugador.y == enemigo1.y:
+            jugador.cantidadMinas += 1
+            enemigo1.vivo = False  
+        if jugador.x == enemigo1.x and jugador.y == enemigo1.y:  
             juego_terminado = True
-        jugador.update() #Actualiza el jugador
+        jugador.update() 
         enemigo1.update()
+        Puntuacion += 100
+        
+    # Regenerar stamina si no está corriendo
+    key = pygame.key.get_pressed()
+    if not (key[pygame.K_LSHIFT] or key[pygame.K_RSHIFT]):
+        stamina_actual = min(stamina_max, stamina_actual + regeneracion_stamina)
+
+    # Dibujar barra de stamina 
+    barra_ancho = 200
+    barra_alto = 20
+    barra_x = 10
+    barra_y = 10
+    # Fondo de la barra
+    pygame.draw.rect(ventana, (100, 100, 100), (barra_x, barra_y, barra_ancho, barra_alto))
+    # Barra actual
+    barra_actual_ancho = (stamina_actual / stamina_max) * barra_ancho
+    pygame.draw.rect(ventana, (0, 255, 0), (barra_x, barra_y, barra_actual_ancho, barra_alto))
+
+    
 
     if juego_terminado:
         # Fondo semi-transparente
@@ -444,12 +485,15 @@ while ejecutando:
         # Texto Game Over
         texto_game_over = fuente_grande.render("GAME OVER", True, (255, 0, 0))
         texto_reiniciar = fuente_mediana.render("Presiona R para reiniciar", True, (255, 255, 255))
+        texto_puntuacion = fuente_mediana.render((f"Puntuacion: {Puntuacion}"), True, (255, 255, 255))
         
         rect_game_over = texto_game_over.get_rect(center=(1000 // 2, 800 // 2 - 50))
         rect_reiniciar = texto_reiniciar.get_rect(center=(1000 // 2, 800 // 2 + 50))
-        
+        rect_puntuacion = texto_puntuacion.get_rect(center=(1000 // 2, 800 // 2 + 100))
+
         ventana.blit(texto_game_over, rect_game_over)
         ventana.blit(texto_reiniciar, rect_reiniciar)
+        ventana.blit(texto_puntuacion, rect_puntuacion)
      
     
   
@@ -458,7 +502,6 @@ while ejecutando:
     
     # Controlar la velocidad del juego
     reloj.tick(10)  # Limita el bucle a 60 iteraciones por segundo (60 FPS)
-
 # Cerrar Pygame correctamente
 pygame.quit()  # Cierra todos los módulos de Pygame
 sys.exit()  # Termina el programa completamente
