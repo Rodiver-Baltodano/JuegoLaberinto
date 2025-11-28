@@ -1,4 +1,3 @@
-
 from .ventanaRegistro import mostrar_ventana_registro, nombre_jugador
 from . import menu
 from . import presaMode
@@ -15,6 +14,3 @@ __all__ = [
     'salonFama',
     'fondo'
 ]
-
-__version__ = '1.0.0'
-__author__ = 'Rodiver'
