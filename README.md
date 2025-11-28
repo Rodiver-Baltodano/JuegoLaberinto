@@ -1,2 +1,0 @@
-# JuegoLaberinto
-Proyecto de programación
