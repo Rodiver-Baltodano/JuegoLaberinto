@@ -2,6 +2,8 @@ import pygame
 import fondo
 import random
 import menu
+import salonFama
+from ventanaRegistro import nombre_jugador
 
 def generar_mapa_aleatorio():
     """Genera un archivo de mapa aleatorio con valores 0, 2, 3, 4"""
@@ -402,25 +404,11 @@ class Mina(pygame.sprite.Sprite):
         self.rect.x = self.grid_x * GRID_SIZE_X
         self.rect.y = self.grid_y * GRID_SIZE_Y
 
-def iniciar_juego():
+def iniciar_juego(jugador_nombre="Jugador"):
     """Función principal que inicia el juego y maneja el bucle del menú"""
     pygame.init()
     
     while True:  # Bucle principal del menú
-        # Mostrar menú y obtener selección
-        modo_seleccionado = menu.funcionMenu()
-        
-        # Si el usuario cierra el menú, salir del juego
-        if modo_seleccionado is None:
-            break
-        
-        # Si selecciona modo cazador (aún no implementado), volver al menú
-        if modo_seleccionado == "cazador":
-            print("Modo Cazador aún no está implementado")
-            continue  # Volver al menú
-        
-        print(f"Modo seleccionado: {modo_seleccionado}")
-        
         # Generar nuevo mapa
         generar_mapa_aleatorio()
         
@@ -694,6 +682,10 @@ def iniciar_juego():
                 # Verificar si se acabó el tiempo - VICTORIA
                 if tiempo_restante <= 0:
                     juego_terminado = True
+                    # Guardar puntuación cuando el juego termina
+                if juego_terminado and not hasattr(iniciar_juego, 'puntuacion_guardada'):
+                    salonFama.guardar_puntuacion(jugador_nombre, Puntuacion, "presa")
+                    iniciar_juego.puntuacion_guardada = True
                     victoria = True
                 
                 movimiento()
@@ -734,8 +726,7 @@ def iniciar_juego():
                     sys.exit()
                 elif evento.type == pygame.KEYDOWN:
                     if evento.key == pygame.K_ESCAPE:
-                        ejecutando = False
-                        volver_menu = False
+                        return "menu"
                     elif evento.key == pygame.K_g:
                         mostrar_grid = not mostrar_grid
                     elif evento.key == pygame.K_p and not juego_terminado:  # AGREGAR
@@ -856,8 +847,7 @@ def iniciar_juego():
                                 enemigos.append(nuevo_enemigo)
                         
                     elif evento.key == pygame.K_m and juego_terminado:
-                        ejecutando = False
-                        volver_menu = True
+                        return "menu"
             
             # Regenerar stamina si no está corriendo
             key = pygame.key.get_pressed()
@@ -961,12 +951,6 @@ def iniciar_juego():
             pygame.display.flip()
             reloj.tick(60)
         
-        # Si no se quiere volver al menú, salir del bucle principal
-        if not volver_menu:
-            pygame.quit()
-            import sys
-            sys.exit()
-            break
 
 if __name__ == "__main__": 
-    iniciar_juego()
+    iniciar_juego("Jugador")

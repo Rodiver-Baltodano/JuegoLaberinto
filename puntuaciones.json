@@ -1,0 +1,17 @@
+{
+    "_cazador": {
+        "nombre": "",
+        "puntuacion": 320,
+        "modo": "cazador"
+    },
+    "Jugador_cazador": {
+        "nombre": "Jugador",
+        "puntuacion": 430,
+        "modo": "cazador"
+    },
+    "Rodiver_cazador": {
+        "nombre": "Rodiver",
+        "puntuacion": 290,
+        "modo": "cazador"
+    }
+}

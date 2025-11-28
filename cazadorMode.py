@@ -2,6 +2,8 @@ import pygame
 import sys
 import random
 import fondo
+import salonFama
+from ventanaRegistro import nombre_jugador
 from presaMode import Personaje, Obstaculo, Muro, Liana, Tunel, generar_mapa_aleatorio
 
 def menu_dificultad():
@@ -136,14 +138,14 @@ class ZonaSegura(pygame.sprite.Sprite):
         self.rect.x = grid_x * GRID_SIZE_X
         self.rect.y = grid_y * GRID_SIZE_Y
 
-def iniciar_modo_cazador():
+def iniciar_modo_cazador(jugador_nombre="Jugador"):
     pygame.init()
     
     while True:
         dificultad = menu_dificultad()
         
         if dificultad is None:
-            break
+            return "menu"
         
         print(f"Dificultad seleccionada: {dificultad}")
         
@@ -285,7 +287,7 @@ def iniciar_modo_cazador():
                 nueva_presa = Personaje(presa_x_pixel, presa_y_pixel, colorPresa, clase="presa", es_enemigo=True,
                                    GRID_SIZE_X=GRID_SIZE_X, GRID_SIZE_Y=GRID_SIZE_Y,
                                    WINDOW_WIDTH=WINDOW_WIDTH, WINDOW_HEIGHT=WINDOW_HEIGHT)
-                nueva_presa.velocidad_enemigo = 2
+                nueva_presa.velocidad_enemigo = 3.5
                 nueva_presa.buscando_zona = False
                 nueva_presa.tiempo_ultima_busqueda = pygame.time.get_ticks()
                 nueva_presa.tiempo_inicio_busqueda = 0
@@ -310,7 +312,7 @@ def iniciar_modo_cazador():
             
             velocidad_actual = presa.velocidad_enemigo
             if presa.esta_en_liana(liana_group):
-                velocidad_actual = max(1, velocidad_actual - 1)
+                velocidad_actual = max(1, velocidad_actual - 0.5)
             
             pos_anterior_x = presa.x
             pos_anterior_y = presa.y
@@ -422,6 +424,10 @@ def iniciar_modo_cazador():
                 
                 if tiempo_restante <= 0:
                     juego_terminado = True
+                    # Guardar puntuación cuando el juego termina
+                if juego_terminado and not hasattr(iniciar_modo_cazador, 'puntuacion_guardada'):
+                    salonFama.guardar_puntuacion(jugador_nombre, Puntuacion, "cazador")
+                    iniciar_modo_cazador.puntuacion_guardada = True
                     victoria = True
                     Puntuacion = Puntuacion * MULTIPLICADOR
                 
@@ -480,8 +486,7 @@ def iniciar_modo_cazador():
                     sys.exit()
                 elif evento.type == pygame.KEYDOWN:
                     if evento.key == pygame.K_ESCAPE:
-                        ejecutando = False
-                        volver_menu = False
+                        return "menu"
                     elif evento.key == pygame.K_p and not juego_terminado:
                         juego_pausado = not juego_pausado
                         if juego_pausado:
@@ -489,8 +494,7 @@ def iniciar_modo_cazador():
                         else:
                             tiempo_total_pausado += pygame.time.get_ticks() - tiempo_pausa_inicio
                     elif evento.key == pygame.K_m and juego_terminado:
-                        ejecutando = False
-                        volver_menu = True
+                        return "menu"
             
             # Panel superior
             panel_alto = 60
@@ -566,12 +570,8 @@ def iniciar_modo_cazador():
             
             pygame.display.flip()
             reloj.tick(60)
-        
-        if not volver_menu:
-            break
     
     pygame.quit()
     sys.exit()
-
 if __name__ == "__main__":
-    iniciar_modo_cazador()
+    iniciar_modo_cazador("Jugador")

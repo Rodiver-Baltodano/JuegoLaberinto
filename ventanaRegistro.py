@@ -230,7 +230,7 @@ def ventana_registro():
     
     return False
 
-
+# POR ESTE CÓDIGO NUEVO:
 if __name__ == "__main__":
     import menu
     
@@ -243,29 +243,51 @@ if __name__ == "__main__":
         # Cerrar ventana de registro
         pygame.quit()
         
-        # Mostrar menú del juego
+        # LOOP PRINCIPAL DEL MENÚ
         while True:
-            modo_seleccionado = menu.funcionMenu()
+            # Reinicializar pygame para el menú
+            pygame.init()
+            
+            # Mostrar menú del juego
+            modo_seleccionado = menu.menu_seleccion_modo()
             
             if modo_seleccionado is None:
                 break
             
             print(f"Modo seleccionado por {nombre_jugador}: {modo_seleccionado}")
             
-            # Cerrar ventana del menú
+            # Si selecciona Salón de la Fama
+            if modo_seleccionado == "salon_fama":
+                pygame.quit()
+                try:
+                    import salonFama
+                    salonFama.mostrar_salon_fama()
+                except Exception as e:
+                    print(f"Error al cargar salon de la fama: {e}")
+                continue  # Volver al menú
+            
+            # Cerrar ventana del menú antes de iniciar el juego
             pygame.quit()
             
-            # Aquí se ejecutaría el juego correspondiente
-            # Nota: Descomentar cuando se tengan los módulos
-            # if modo_seleccionado == "presa":
-            #     import presaMode
-            #     presaMode.iniciar_juego()
-            # elif modo_seleccionado == "cazador":
-            #     import cazadorMode
-            #     cazadorMode.iniciar_modo_cazador()
+            # Ejecutar el juego correspondiente
+            resultado = None
+            try:
+                if modo_seleccionado == "presa":
+                    import presaMode
+                    resultado = presaMode.iniciar_juego(nombre_jugador)  # PASAR NOMBRE
+                elif modo_seleccionado == "cazador":
+                    import cazadorMode
+                    resultado = cazadorMode.iniciar_modo_cazador(nombre_jugador)  # PASAR NOMBRE
+            except Exception as e:
+                print(f"Error al iniciar el juego: {e}")
+                import traceback
+                traceback.print_exc()
             
-            # Reinicializar pygame para volver al menú
-            pygame.init()
+            # Si resultado no es "menu", salir completamente
+            if resultado != "menu":
+                break
+            
+            # Si es "menu", el loop continúa y vuelve a mostrar el menú
     else:
         print("Registro cancelado")
     

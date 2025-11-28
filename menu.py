@@ -75,10 +75,11 @@ def menu_seleccion_modo():
     ancho_boton = ancho_texto_boton + (padding * 2)
     alto_boton = alto_texto_boton + (padding * 2)
     x_centrado = (ANCHO - ancho_boton) // 2
-    y_primer_boton = 180
+    y_primer_boton = 160
     
     boton_presa = Boton("Modo Presa", x_centrado, y_primer_boton, ancho_boton, alto_boton)
-    boton_cazador = Boton("Modo Cazador", x_centrado, y_primer_boton + alto_boton + 30, ancho_boton, alto_boton)
+    boton_cazador = Boton("Modo Cazador", x_centrado, y_primer_boton + alto_boton + 20, ancho_boton, alto_boton)
+    boton_salon = Boton("Ranking", x_centrado, y_primer_boton + (alto_boton + 20) * 2, ancho_boton, alto_boton)
     
     # Reloj para controlar los FPS
     reloj = pygame.time.Clock()
@@ -110,10 +111,14 @@ def menu_seleccion_modo():
                 elif boton_cazador.verificar_click(pos_mouse):
                     seleccion = "cazador"
                     ejecutando = False
+                elif boton_salon.verificar_click(pos_mouse):
+                    seleccion = "salon_fama"
+                    ejecutando = False
         
         # Verificar hover en los botones
         boton_presa.verificar_hover(pos_mouse)
         boton_cazador.verificar_hover(pos_mouse)
+        boton_salon.verificar_hover(pos_mouse)
         
         # Dibujar el fondo
         ventana.blit(fondo, (0, 0))
@@ -142,6 +147,7 @@ def menu_seleccion_modo():
         # Dibujar los botones
         boton_presa.dibujar(ventana)
         boton_cazador.dibujar(ventana)
+        boton_salon.dibujar(ventana)
         
         # Actualizar la pantalla
         pygame.display.flip()
@@ -264,7 +270,7 @@ def menu_seleccion_dificultad():
         ventana.blit(fondo, (0, 0))
         
         # Dibujar el título
-        texto_titulo = "Selecciona Dificultad"
+        texto_titulo = "Selecciona de Modo"
         ancho_texto, alto_texto = fuente_titulo.size(texto_titulo)
         x_titulo = (ANCHO - ancho_texto) // 2
         y_titulo = 40
@@ -299,6 +305,7 @@ def menu_seleccion_dificultad():
 if __name__ == "__main__":
     import presaMode
     import cazadorMode
+    import salonFama
     
     pygame.init()
     
@@ -310,6 +317,13 @@ if __name__ == "__main__":
             break
         
         print(f"Modo seleccionado: {modo_seleccionado}")
+        
+        # Si selecciona Salón de la Fama
+        if modo_seleccionado == "salon_fama":
+            pygame.quit()
+            salonFama.mostrar_salon_fama()
+            pygame.init()
+            continue
         
         # Cerrar ventana del menú antes de iniciar el juego
         pygame.quit()
