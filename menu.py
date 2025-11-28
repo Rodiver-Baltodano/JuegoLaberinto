@@ -18,7 +18,7 @@ def funcionMenu():
     
     # Cargar y escalar la imagen de fondo
     try:
-        fondo = pygame.image.load("fondoMenu.png")
+        fondo = pygame.image.load("imagenes/fondoMenu.png")
         fondo = pygame.transform.scale(fondo, (ANCHO, ALTO))
     except pygame.error as e:
         print(f"No se pudo cargar la imagen: {e}")
@@ -153,9 +153,30 @@ def funcionMenu():
 
 # Si se ejecuta directamente este archivo, mostrar el menú
 if __name__ == "__main__":
+    import cazadorMode
+    import presaMode
+    
     pygame.init()
-    modo_seleccionado = funcionMenu()
-    if modo_seleccionado:
+    
+    while True:
+        modo_seleccionado = funcionMenu()
+        
+        if modo_seleccionado is None:
+            break
+        
         print(f"Modo seleccionado: {modo_seleccionado}")
+        
+        # Cerrar ventana del menú antes de iniciar el juego
+        pygame.quit()
+        
+        # Ejecutar el modo correspondiente
+        if modo_seleccionado == "presa":
+            presaMode.iniciar_juego()
+        elif modo_seleccionado == "cazador":
+            cazadorMode.iniciar_modo_cazador()
+        
+        # Reinicializar pygame para volver al menú
+        pygame.init()
+    
     pygame.quit()
     sys.exit()

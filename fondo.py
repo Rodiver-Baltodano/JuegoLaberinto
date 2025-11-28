@@ -15,7 +15,7 @@ def iniciar_fondo():
     
     # Cargar la imagen de fondo
     try:
-        background = pygame.image.load("Fondo.png")
+        background = pygame.image.load("imagenes/fondo.png")
         bg_width, bg_height = background.get_size()
         
         # Crear una superficie para el mapa completo (2x2 tiles)
